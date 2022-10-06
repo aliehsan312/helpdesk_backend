@@ -6,12 +6,12 @@ class Ticket_Status extends Model {}
 
 Ticket_Status.init(
   {
-    ticket_status_id: {
+    id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
       },
-      ticket_status_name: {
+      name: {
         type: DataTypes.STRING,
         allowNull: false,
       },

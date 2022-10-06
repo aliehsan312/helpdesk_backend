@@ -6,12 +6,12 @@ class Designation extends Model {}
 
 Designation.init(
   {
-    designation_id: {
+    id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true
       },
-      designation_name: {
+      name: {
         type: DataTypes.STRING,
         allowNull: false
       },

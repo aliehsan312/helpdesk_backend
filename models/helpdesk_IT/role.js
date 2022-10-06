@@ -1,10 +1,9 @@
 const { Model,DataTypes } = require('sequelize')
-const { sub_category } = require('../../util/tableNames')
 const { sequelize } = require('../../util/db')
-const {category} = require('../../util/tableNames')
-class Sub_Category extends Model {}
+const { roles } = require('../../util/tableNames')
+class Role extends Model {}
 
-Sub_Category.init(
+Role.init(
   {
     id: {
         type: DataTypes.INTEGER,
@@ -18,21 +17,16 @@ Sub_Category.init(
       description: {
         type: DataTypes.STRING,
         allowNull: true,
-      },
-      category_id: {
-          type: DataTypes.INTEGER,
-          allowNull:false,
-          references: { model: category, key: 'id' }
       }
   },
   {
     sequelize,
-    tableName: sub_category.tableName,
-    schema: sub_category.schema,
+    tableName: roles.tableName,
+    schema: roles.schema,
     underscored: false,
     timestamps: false,
-    modelName: "sub_category",
+    modelName: "roles",
   }
 )
 
-module.exports = Sub_Category
+module.exports = Role

@@ -6,10 +6,10 @@ const { users,department,designation,grade,location } = require('../../util/tabl
 class User extends Model {}
 
 User.init({
-  user_id: {
-    type: DataTypes.INTEGER,
+  id: {
+    type: DataTypes.UUID,
     primaryKey: true,
-    autoIncrement: true
+    defaultValue: DataTypes.UUIDV4,
   },
   user_name: {
     type: DataTypes.STRING,
@@ -27,12 +27,9 @@ User.init({
     type: DataTypes.INTEGER,
     allowNull: false
   },
-  first_name: {
+  employee_name: {
     type: DataTypes.STRING,
     allowNull: false
-  },
-  last_name: {
-    type: DataTypes.STRING,
   },
   phone_number: {
     type: DataTypes.STRING

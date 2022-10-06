@@ -1,5 +1,6 @@
 const router = require('express').Router()
 const { Op } = require('sequelize')
+//const logger = require('../../utils/logger')
 const{  User  }= require('../../models/user/user_associations')
 const  Location  = require('../../models/user/location')
 const  Department  = require('../../models/user/department')
@@ -8,7 +9,22 @@ const  Grade  = require('../../models/user/grade')
 
 
 router.get('/:id', async (req, res) => {
-  const users = await User.findByPk(req.params.id)
+  const users = await User.findOne({
+    where: {og_number:req.params.id},
+    include:[ {
+      model: Location
+      },
+    {
+      model: Department
+      },
+    {
+      model: Designation
+      },
+    {
+      model: Grade
+      },
+    ]
+  })
   res.json(users)
 })
 
@@ -17,7 +33,7 @@ router.get('/:id', async (req, res) => {
 router.get('/', async (req, res) => {
 
   const users = await User.findAll({
-    attributes: ['user_name'],
+    attributes: ['user_name','employee_name'],
     include:[ {
       model: Location
       },
@@ -33,6 +49,13 @@ router.get('/', async (req, res) => {
     ]
     })
   res.json(users)
+})
+router.post('/', async (req, res) => {
+  const body = req.body
+  console.log('From POST',body);
+  body.is_firstLogin = true
+  const newUser = await User.create(body)
+  res.json(newUser)
 })
 
 /* router.put('/:username', async (req, res) => {

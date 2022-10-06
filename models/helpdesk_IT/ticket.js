@@ -6,7 +6,7 @@ const { users,ticket_status,category,sub_category, ticket } = require('../../uti
 class Ticket extends Model {}
 
 Ticket.init({
-    ticket_id: {
+    id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
@@ -19,18 +19,18 @@ Ticket.init({
       },
       category_id: {
           type: DataTypes.INTEGER,
-          references: { model: category, key: 'category_id' }
+          references: { model: category, key: 'id' }
       },
       subcategory_id: {
           type: DataTypes.INTEGER,
-          references: { model: sub_category, key: 'sub_category_id' }
+          references: { model: sub_category, key: 'id' }
       },
       file_id: {
           type: DataTypes.INTEGER
       },
       status_id: {
           type: DataTypes.INTEGER,
-          references: { model: ticket_status, key: 'ticket_status_id'}
+          references: { model: ticket_status, key: 'id'}
       },
       createdAt: {
           type: DataTypes.DATE
@@ -42,14 +42,14 @@ Ticket.init({
           type: DataTypes.STRING
       },
       complainer_user_id: {
-          type: DataTypes.INTEGER,
+          type: DataTypes.UUID,
           allowNull:false,
-          references: { model: users, key: 'user_id' }
+          references: { model: users, key: 'id' }
       },
       assigned_to_user_id: {
-          type: DataTypes.INTEGER,
+          type: DataTypes.UUID,
           allowNull:false,
-          references: { model: users, key: 'user_id' }
+          references: { model: users, key: 'id' }
       }
 }, {
   sequelize,

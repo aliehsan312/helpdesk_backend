@@ -1,24 +1,24 @@
-const { Model,DataTypes } = require('sequelize')
-const { category } = require('../../util/tableNames')
-const { sequelize } = require('../../util/db')
+const { Model, DataTypes } = require("sequelize")
+const { category } = require("../../util/tableNames")
+const { sequelize } = require("../../util/db")
 
 class Category extends Model {}
 
 Category.init(
   {
-    category_id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
-      },
-      category_name: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      description: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    description: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
   {
     sequelize,

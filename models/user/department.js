@@ -6,12 +6,12 @@ class Department extends Model {}
 
 Department.init(
   {
-    department_id: {
+    id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true
       },
-      department_name: {
+      name: {
         type: DataTypes.STRING,
         allowNull: false
       },

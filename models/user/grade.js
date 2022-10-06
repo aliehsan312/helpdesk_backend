@@ -6,12 +6,12 @@ class Grade extends Model {}
 
 Grade.init(
   {
-    grade_id: {
+    id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
     },
-    grade_name: {
+    name: {
       type: DataTypes.STRING,
       allowNull: false,
     },

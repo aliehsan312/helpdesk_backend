@@ -6,12 +6,12 @@ class Location extends Model {}
 
 Location.init(
   {
-    location_id: {
+    id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
     },
-    location_name: {
+    name: {
       type: DataTypes.STRING,
       allowNull: false,
     },

@@ -5,12 +5,12 @@ const { category, ticket,ticket_status,sub_category,users} = require('../util/ta
 module.exports = {
   up: async ({ context: queryInterface }) => {
     await queryInterface.createTable(category, {
-      category_id: {
+      id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true,
       },
-      category_name: {
+      name: {
         type: DataTypes.STRING,
         allowNull: false,
       },
@@ -20,12 +20,12 @@ module.exports = {
       },
     }),
       await queryInterface.createTable(ticket_status, {
-        ticket_status_id: {
+        id: {
           type: DataTypes.INTEGER,
           primaryKey: true,
           autoIncrement: true,
         },
-        ticket_status_name: {
+        name: {
           type: DataTypes.STRING,
           allowNull: false,
         },
@@ -35,12 +35,12 @@ module.exports = {
         },
       }),
       await queryInterface.createTable(sub_category, {
-        sub_category_id: {
+        id: {
           type: DataTypes.INTEGER,
           primaryKey: true,
           autoIncrement: true,
         },
-        sub_category_name: {
+        name: {
           type: DataTypes.STRING,
           allowNull: false,
         },
@@ -51,11 +51,11 @@ module.exports = {
         category_id: {
             type: DataTypes.INTEGER,
             allowNull:false,
-            references: { model: category, key: 'category_id' }
+            references: { model: category, key: 'id' }
         }
       }),
       await queryInterface.createTable(ticket, {
-        ticket_id: {
+        id: {
           type: DataTypes.INTEGER,
           primaryKey: true,
           autoIncrement: true,
@@ -68,18 +68,18 @@ module.exports = {
         },
         category_id: {
             type: DataTypes.INTEGER,
-            references: { model: category, key: 'category_id' }
+            references: { model: category, key: 'id' }
         },
         subcategory_id: {
             type: DataTypes.INTEGER,
-            references: { model: sub_category, key: 'sub_category_id' }
+            references: { model: sub_category, key: 'id' }
         },
         file_id: {
             type: DataTypes.INTEGER
         },
         status_id: {
             type: DataTypes.INTEGER,
-            references: { model: ticket_status, key: 'ticket_status_id'}
+            references: { model: ticket_status, key: 'id'}
         },
         createdAt: {
             type: DataTypes.DATE
@@ -91,14 +91,14 @@ module.exports = {
             type: DataTypes.STRING
         },
         complainer_user_id: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.UUID,
             allowNull:false,
-            references: { model: users, key: 'user_id' }
+            references: { model: users, key: 'id' }
         },
         assigned_to_user_id: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.UUID,
             allowNull:false,
-            references: { model: users, key: 'user_id' }
+            references: { model: users, key: 'id' }
         }
 
       })

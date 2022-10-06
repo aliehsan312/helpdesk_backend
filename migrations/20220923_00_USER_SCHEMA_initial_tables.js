@@ -6,12 +6,12 @@ const { department,designation,grade,location,users} = require('../util/tableNam
 module.exports = {
   up: async ({ context: queryInterface }) => {
     await queryInterface.createTable(department, {
-      department_id: {
+      id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true
       },
-      department_name: {
+      name: {
         type: DataTypes.STRING,
         allowNull: false
       },
@@ -21,12 +21,12 @@ module.exports = {
       }
     })
     await queryInterface.createTable(designation, {
-      designation_id: {
+      id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true
       },
-      designation_name: {
+      name: {
         type: DataTypes.STRING,
         allowNull: false
       },
@@ -36,32 +36,32 @@ module.exports = {
       }
     }),
     await queryInterface.createTable(grade, {
-      grade_id: {
+      id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true
       },
-      grade_name: {
+      name: {
         type: DataTypes.STRING,
         allowNull: false
       }
     }),
     await queryInterface.createTable(location, {
-      location_id: {
+      id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
         autoIncrement: true
       },
-      location_name: {
+      name: {
         type: DataTypes.STRING,
         allowNull: false
       }
     }),
     await queryInterface.createTable(users, {
-      user_id: {
-        type: DataTypes.INTEGER,
+      id: {
+        type: DataTypes.UUID,
         primaryKey: true,
-        autoIncrement: true
+        default: DataTypes.UUIDV4,
       },
       user_name: {
         type: DataTypes.STRING,
@@ -79,12 +79,9 @@ module.exports = {
         type: DataTypes.INTEGER,
         allowNull: false
       },
-      first_name: {
+      employee_name: {
         type: DataTypes.STRING,
         allowNull: false
-      },
-      last_name: {
-        type: DataTypes.STRING,
       },
       phone_number: {
         type: DataTypes.STRING
@@ -104,12 +101,12 @@ module.exports = {
       designation_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: { model: designation, key: 'designation_id' }
+        references: { model: designation, key: 'id' }
       },
       department_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: { model: department, key: 'department_id' }
+        references: { model: department, key: 'id' }
       },
       email: {
         type: DataTypes.STRING
@@ -119,11 +116,11 @@ module.exports = {
       },
       location_id: {
         type: DataTypes.INTEGER,
-        references: { model: location, key: 'location_id' }
+        references: { model: location, key: 'id' }
       },
       grade_id: {
         type: DataTypes.INTEGER,
-        references: { model: grade, key: 'grade_id' }
+        references: { model: grade, key: 'id' }
       },
       is_firstLogin: {
         type: DataTypes.BOOLEAN,

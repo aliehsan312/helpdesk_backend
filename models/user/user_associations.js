@@ -4,22 +4,22 @@ const Grade = require('./grade')
 const Location = require('./location')
 const User = require('./user')
 
-User.hasOne(Location, {
+User.belongsTo(Location, {
     foreignKey: {
         name: 'location_id'
     }
 })
-User.hasOne(Grade, {
+User.belongsTo(Grade, {
     foreignKey: {
         name: 'grade_id'
     }
 })
-User.hasOne(Department, {
+User.belongsTo(Department, {
     foreignKey: {
         name: 'department_id'
     }
 })
-User.hasOne(Designation, {
+User.belongsTo(Designation, {
     foreignKey: {
         name: 'designation_id'
     }
