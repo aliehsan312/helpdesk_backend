@@ -5,7 +5,7 @@ const Ticket_Status = require('./ticket_status')
 const {User} = require('../user/user_associations')
 const Role = require('./role')
 const User_Role = require('./user_role')
-
+const Category_Role = require('./category_role')
 Ticket.belongsTo(User, {
     as: 'complainer_user',
     foreignKey: {
@@ -23,9 +23,9 @@ Ticket.belongsTo(Category, {
         name: 'category_id'
     }
 })
-Ticket.hasOne(Ticket_Status, {
+Ticket.belongsTo(Ticket_Status, {
     foreignKey: {
-        name: 'ticket_status_id'
+        name: 'status_id'
     }
 })
 Ticket.belongsTo(Sub_Category, {
@@ -52,8 +52,17 @@ User_Role.belongsTo(User, {
     foreignKey: 'user_id'
 })
 
+Category_Role.belongsTo(Role, {
+    as:'role',
+    foreignKey:'role_id'
+})
+Category_Role.belongsTo(Category, {
+    as:'category',
+    foreignKey:'category_id'
+})
+
 //User.belongsToMany(Blog, { through: Reading, as: 'listed_blogs' })
 //Blog.belongsToMany(User, { through: Reading, as: 'listed_by_users' })
 module.exports = {
-  Ticket,Sub_Category,Category,User_Role
+  Ticket,Sub_Category,Category,User_Role,Category_Role
 }
