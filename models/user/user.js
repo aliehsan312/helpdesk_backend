@@ -24,27 +24,33 @@ User.init({
     type: DataTypes.DATE
   },
   og_number: {
-    type: DataTypes.INTEGER,
-    allowNull: false
+    type: DataTypes.NUMBER,
+    allowNull: false,
+    unique:true
   },
   employee_name: {
     type: DataTypes.STRING,
     allowNull: false
   },
   phone_number: {
-    type: DataTypes.STRING
+    type: DataTypes.STRING,
+    defaultValue:''
   },
   extension: {
-    type: DataTypes.INTEGER
+    type: DataTypes.STRING,
+    defaultValue:''
   },
   floor_number: {
-    type: DataTypes.STRING
+    type: DataTypes.STRING,
+    defaultValue:''
   },
   room_number: {
-    type: DataTypes.STRING
+    type: DataTypes.STRING,
+    defaultValue:''
   },
   tower: {
-    type: DataTypes.TEXT(1)
+    type: DataTypes.TEXT(1),
+    defaultValue:''
   },
   designation_id: {
     type: DataTypes.INTEGER,
@@ -57,10 +63,12 @@ User.init({
     references: { model: department, key: 'department_id' }
   },
   email: {
-    type: DataTypes.STRING
+    type: DataTypes.STRING,
+    defaultValue:''
   },
   comp_no: {
-    type: DataTypes.STRING
+    type: DataTypes.STRING,
+    defaultValue:''
   },
   location_id: {
     type: DataTypes.INTEGER,

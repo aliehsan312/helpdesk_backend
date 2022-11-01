@@ -61,17 +61,21 @@ module.exports = {
           autoIncrement: true,
         },
         subject: {
-          type: DataTypes.STRING
+          type: DataTypes.STRING,
+          default: ''
         },
         description: {
-            type: DataTypes.STRING
+            type: DataTypes.STRING,
+            default:''
         },
         category_id: {
             type: DataTypes.INTEGER,
+            allowNull: false,
             references: { model: category, key: 'id' }
         },
         subcategory_id: {
             type: DataTypes.INTEGER,
+            allowNull: false,
             references: { model: sub_category, key: 'id' }
         },
         file_id: {
@@ -88,7 +92,8 @@ module.exports = {
             type: DataTypes.DATE
         },
         computer_num: {
-            type: DataTypes.STRING
+            type: DataTypes.STRING,
+            default:''
         },
         complainer_user_id: {
             type: DataTypes.UUID,
@@ -97,7 +102,6 @@ module.exports = {
         },
         assigned_to_user_id: {
             type: DataTypes.UUID,
-            allowNull:false,
             references: { model: users, key: 'id' }
         }
 

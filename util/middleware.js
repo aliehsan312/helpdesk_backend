@@ -1,31 +1,116 @@
 const jwt = require("jsonwebtoken")
 const { SECRET } = require("./config")
 //const Session = require("../models/session")
-const logger = require('./logger')
-
+const logger = require("./logger")
+const {
+  SW_TECH_ID,
+  HW_TECH_ID,
+  SW_SUPR_ID,
+  HW_SUPR_ID,
+  WAITING_ID,
+  ASSIGNED_ID,
+  ATTENDED_ID,
+  USER_ID,
+} = require("./helper")
+const { Op, Sequelize } = require("sequelize")
+const { Category_Role } =  require("../models/helpdesk_IT/helpdesk_associations")
 const requestLogger = (request, response, next) => {
-  logger.info('Method:', request.method)
-  logger.info('Path:  ', request.path)
-  logger.info('Body:  ', request.body)
-  logger.info('---')
+  logger.info("Method:", request.method)
+  logger.info("Path:  ", request.path)
+  logger.info("Body:  ", request.body)
+  logger.info("---")
   next()
 }
 
 const tokenExtractor = (req, res, next) => {
   const authorization = req.get("authorization")
-  try{
-  if (authorization && authorization.toLowerCase().startsWith("bearer ")) {
-    console.log("authorization", authorization)
-    try {
-      req.decodedToken = jwt.verify(authorization.substring(7), SECRET)
-      console.log("from token extractor", req.decodedToken)
-    } catch {
-      throw ({name:"InvalidToken"})
+  try {
+    if (authorization && authorization.toLowerCase().startsWith("bearer ")) {
+      console.log("authorization", authorization)
+      try {
+        req.decodedToken = jwt.verify(authorization.substring(7), SECRET)
+        console.log("from token extractor", req.decodedToken)
+      } catch {
+        throw { name: "InvalidToken" }
+      }
+    } else {
+      throw { name: "MissingToken" }
     }
-  } else {
-    throw ({name:"MissingToken"})
-  }}
-  catch(error) { next(error)}
+  } catch (error) {
+    next(error)
+  }
+  next()
+}
+
+const whereDecider = async (req, res, next) => {
+  console.log("Reacehd Where Decider", req.decodedToken)
+  try {
+    const where = {}
+    if(req.decodedToken.role.id === USER_ID){
+      where.complainer_user_id = req.decodedToken.id
+    }
+    else if (
+      req.decodedToken.role.id === SW_TECH_ID ||
+      req.decodedToken.role.id === HW_TECH_ID
+    ) {
+      where.assigned_to_user_id = req.decodedToken.id
+      if (req.query.type) {
+        switch (req.query.type) {
+          case "new":
+            where.status_id = {
+              [Op.or]: [WAITING_ID, ASSIGNED_ID],
+            }
+            break
+          case "attended":
+            where.status_id = ATTENDED_ID
+            break
+          default:
+            break
+        }
+      }} else if (
+        req.decodedToken.role.id === SW_SUPR_ID ||
+        req.decodedToken.role.id === HW_SUPR_ID
+      ) {
+        if (req.query.type) {
+          switch (req.query.type) {
+            case "new":
+              where.status_id = WAITING_ID
+              break
+            case "attended":
+              where.status_id = ATTENDED_ID
+              break
+            case "unattended":
+              where.status_id = {
+                [Op.or]: [ASSIGNED_ID, WAITING_ID],
+              }
+              break
+            case "assigned_to_me":
+              where.assigned_to_user_id = req.decodedToken.id
+              break
+            default:
+              break
+          }
+        }
+        const categories = await Category_Role.findAll({
+          where: {
+            role_id: req.decodedToken.role.id,
+          },
+          attributes: { exclude: ["id"] },
+        })
+        console.log(
+          "Categorties",
+          categories.map((item) => item.dataValues.category_id)
+        )
+
+        where.category_id = {
+          [Op.or]: categories.map((item) => item.dataValues.category_id),
+        }
+      }
+    
+    req.where = where
+  } catch (error) {
+    next(error)
+  }
   next()
 }
 
@@ -38,7 +123,7 @@ const isLoggedIn = async (req, res, next) => {
       },
     })
     if (active) req.loggedin = true
-    else throw ({name:"SessionExpired"})
+    else throw { name: "SessionExpired" }
   } catch (error) {
     next(error)
   }
@@ -58,10 +143,11 @@ const errorHandler = (error, request, response, next) => {
     return response.status(401).send({ error: "Token Missing" })
   } else if (error.name === "InvalidToken")
     res.status(401).json({ error: "token invalid" })
-    else if (error.name === "SessionExpired") response.status(401).json({error: "Session Expired. Please Login."})
+  else if (error.name === "SessionExpired")
+    response.status(401).json({ error: "Session Expired. Please Login." })
   else {
     return response.status(400).send({ error: error.message })
   }
 }
 
-module.exports = { tokenExtractor, isLoggedIn, requestLogger, errorHandler }
+module.exports = { tokenExtractor, isLoggedIn, requestLogger, errorHandler, whereDecider }

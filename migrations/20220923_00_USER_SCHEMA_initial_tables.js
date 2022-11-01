@@ -76,7 +76,8 @@ module.exports = {
         type: DataTypes.DATE
       },
       og_number: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.NUMBER,
+        unique:true,
         allowNull: false
       },
       employee_name: {
@@ -84,19 +85,24 @@ module.exports = {
         allowNull: false
       },
       phone_number: {
-        type: DataTypes.STRING
+        type: DataTypes.STRING,
+        default:''
       },
       extension: {
-        type: DataTypes.INTEGER
+        type: DataTypes.STRING,
+        default:''
       },
       floor_number: {
-        type: DataTypes.STRING
+        type: DataTypes.STRING,
+        default:''
       },
       room_number: {
-        type: DataTypes.STRING
+        type: DataTypes.STRING,
+        default:''
       },
       tower: {
-        type: DataTypes.TEXT(1)
+        type: DataTypes.TEXT(1),
+        default:''
       },
       designation_id: {
         type: DataTypes.INTEGER,
@@ -109,10 +115,12 @@ module.exports = {
         references: { model: department, key: 'id' }
       },
       email: {
-        type: DataTypes.STRING
+        type: DataTypes.STRING,
+        default:''
       },
       comp_no: {
-        type: DataTypes.STRING
+        type: DataTypes.STRING,
+        default:''
       },
       location_id: {
         type: DataTypes.INTEGER,

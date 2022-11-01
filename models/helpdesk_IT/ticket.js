@@ -12,10 +12,12 @@ Ticket.init({
         autoIncrement: true,
       },
       subject: {
-        type: DataTypes.STRING
+        type: DataTypes.STRING,
+        defaultValue: ''
       },
       description: {
-          type: DataTypes.STRING
+          type: DataTypes.STRING,
+          defaultValue:''
       },
       category_id: {
           type: DataTypes.INTEGER,
@@ -39,7 +41,8 @@ Ticket.init({
           type: DataTypes.DATE
       },
       computer_num: {
-          type: DataTypes.STRING
+          type: DataTypes.STRING,
+          defaultValue:''
       },
       complainer_user_id: {
           type: DataTypes.UUID,
@@ -48,7 +51,6 @@ Ticket.init({
       },
       assigned_to_user_id: {
           type: DataTypes.UUID,
-          allowNull:false,
           references: { model: users, key: 'id' }
       }
 }, {

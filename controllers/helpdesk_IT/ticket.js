@@ -10,41 +10,13 @@ const Category = require("../../models/helpdesk_IT/category")
 const Grade = require("../../models/user/grade")
 const { User } = require("../../models/user/user_associations")
 const logger = require("../../util/logger")
-const { tokenExtractor } = require("../../util/middleware")
+const { tokenExtractor,whereDecider } = require("../../util/middleware")
 
-/* router.get("/:id",tokenExtractor, async (req, res, next) => {
+
+router.get("/:id", async (req, res, next) => {
   try {
-    const ticket = await Ticket.findAll({where: {complainer_user_id:req.decodedToken.id}})
-    res.json(ticket)
-  } catch (error) {
-    next(error)
-  }
-}) */
-
-router.get("/", tokenExtractor, async (req, res, next) => {
-  console.log("Reacehd GET")
-
-  try {
-    const categories = await Category_Role.findAll({
-      where: {
-        role_id: 4,
-      },
-      attributes: { exclude: ["id"] },
-    })
-    console.log("Categorties", categories.map(item => item.dataValues.category_id))
-    const ticketAll = await Ticket.findAll({
-      where: {
-        category_id: {
-          [Op.or]: categories.map(item => item.dataValues.category_id),
-        },
-      },
-      attributes: [
-        "description",
-        "complainer_user_id",
-        "assigned_to_user_id",
-        "id",
-        'createdAt'
-      ],
+    const tickets = await Ticket.findAll({
+      where: { complainer_user_id: req.params.id },
       include: [
         {
           model: Ticket_Status,
@@ -61,7 +33,7 @@ router.get("/", tokenExtractor, async (req, res, next) => {
         {
           model: User,
           as: "complainer_user",
-          attributes: ["user_name", "employee_name"],
+          attributes: ["user_name", "employee_name","og_number"],
           include: [
             {
               model: Grade,
@@ -75,10 +47,72 @@ router.get("/", tokenExtractor, async (req, res, next) => {
           attributes: ["user_name", "employee_name"],
         },
       ],
-      order: [['createdAt','DESC']]
+      order: [["updatedAt", "DESC"]],
+        
+  })
+    res.status(200).json(tickets)
+  } catch (error) {
+    next(error)
+  }
+})
+
+router.get("/", tokenExtractor,whereDecider, async (req, res, next) => {
+  console.log("Reacehd GET")
+
+  try {
+    
+    const currentPage = req.params.page ? req.query.page : 1
+    const offset = (currentPage - 1) * 10
+
+    const ticketAll = await Ticket.findAndCountAll({
+      where: req.where,
+      include: [
+        {
+          model: Ticket_Status,
+          attributes: { exclude: "description" },
+        },
+        {
+          model: Sub_Category,
+          attributes: ["name"],
+        },
+        {
+          model: Category,
+          attributes: ["name"],
+        },
+        {
+          model: User,
+          as: "complainer_user",
+          include: [
+            {
+              model: Grade,
+              attributes: ["name"],
+            },
+          ],
+        },
+        {
+          model: User,
+          as: "assigned_to_user",
+          attributes: ["user_name", "employee_name"],
+        },
+      ],
+      order: [["updatedAt", "DESC"]],
+      offset: offset,
+      limit: 10,
     })
-    console.log("Returned Tickets", ticketAll)
-    res.status(200).json(ticketAll)
+
+    const totalItems = ticketAll.count
+    const totalPages = Math.ceil(ticketAll.count / 10)
+    const hasNextPage = currentPage < totalPages ? true : false
+    const hasPreviousPage = currentPage > 1 ? true : false
+    const meta = {
+      totalItems: totalItems,
+      totalPages: totalPages,
+      currentPage: currentPage,
+      hasNextPage: hasNextPage,
+      hasPreviousPage: hasPreviousPage,
+    }
+    console.log("Returned Tickets", totalPages)
+    res.status(200).json({ tickets: ticketAll.rows, meta })
   } catch (error) {
     next(error)
   }
@@ -96,25 +130,32 @@ router.post("/", async (req, res, next) => {
     console.log("Ticket Here", ticket)
     const result = await Ticket.create(ticket)
     logger.info("From POST", result)
-    res.json(result)
+    res.status(200).json(result)
   } catch (error) {
     next(error)
   }
 })
 
-/* router.put('/:username', async (req, res) => {
-    const user = await User.findOne({
-        where: {
-          username: req.params.username
-        }
-      })
-    if (user) {
-    user.username = req.body.username
-    const newUser = await user.save()
-    res.json(newUser)
-  } else {
-    res.status(404).end()
+router.put("/:id", tokenExtractor, async (req, res, next) => {
+  try {
+    const body = req.body
+    const ticket = await Ticket.findOne({
+      where: {
+        id: req.params.id,
+      },
+    })
+    if (ticket) {
+      if (body.assigned_to_user_id)
+        ticket.assigned_to_user_id = body.assigned_to_user_id
+      if (body.status_id) ticket.status_id = body.status_id
+      const newTicket = await ticket.save()
+      res.status(200).json(newTicket)
+    } else {
+      res.status(404).end()
+    }
+  } catch (error) {
+    next(error)
   }
-}) */
+})
 
 module.exports = router
