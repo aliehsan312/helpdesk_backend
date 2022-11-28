@@ -10,6 +10,7 @@ const formInfoRouter = require('./controllers/users/formInfo')
 const loginRouter = require('./controllers/login/login')
 const roleRouter = require('./controllers/helpdesk_IT/userRole')
 const {requestLogger,errorHandler} = require('./util/middleware')
+const incidentRouter = require('./controllers/helpdesk_IT/incidentLog')
 const logger = require('./util/logger')
 
 const unknownEndpoint = (request, response) => {
@@ -27,6 +28,7 @@ app.use('/api/categories',categoriesRouter)
 app.use('/api/categories',categoriesRouter)
 app.use('/api/forminfo',formInfoRouter)
 app.use('/api/user_role',roleRouter)
+app.use('/api/incident_logs',incidentRouter)
 app.use(unknownEndpoint)
 app.use(errorHandler)
 

@@ -22,7 +22,8 @@ const on_behalf_of = { schema: "helpdesk_IT", tableName: "on_behalf_of"}
 const roles = { schema: "helpdesk_IT", tableName: "roles"}
 const user_roles = { schema: "helpdesk_IT", tableName: "user_roles"}
 const category_role = { schema: "helpdesk_IT", tableName: "category_role"}
+const incident_log = { schema: "helpdesk_IT", tableName: "incident_logs"}
 module.exports = {
     department,designation,grade,location,users,
-    category,ticket,ticket_status,sub_category,action,on_behalf_of,roles,user_roles,category_role
+    category,ticket,ticket_status,sub_category,action,on_behalf_of,roles,user_roles,category_role,incident_log
 }

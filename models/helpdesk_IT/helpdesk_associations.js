@@ -6,6 +6,8 @@ const {User} = require('../user/user_associations')
 const Role = require('./role')
 const User_Role = require('./user_role')
 const Category_Role = require('./category_role')
+const On_Behalf_Of = require('./on_behalf_of')
+const Action = require('./action')
 Ticket.belongsTo(User, {
     as: 'complainer_user',
     foreignKey: {
@@ -61,8 +63,28 @@ Category_Role.belongsTo(Category, {
     foreignKey:'category_id'
 })
 
+On_Behalf_Of.belongsTo(User, {
+    as:"created_by_user",
+    foreignKey: 'created_by_user_id'
+})
+
+On_Behalf_Of.belongsTo(Ticket, {
+    as:"ticket",
+    foreignKey: 'ticket_id'
+})
+
+Action.belongsTo(Ticket, {
+    as:'ticket',
+    foreignKey:'ticket_id'
+})
+
+Action.belongsTo(User, {
+    as:'user',
+    foreignKey:'user_id'
+})
+
 //User.belongsToMany(Blog, { through: Reading, as: 'listed_blogs' })
 //Blog.belongsToMany(User, { through: Reading, as: 'listed_by_users' })
 module.exports = {
-  Ticket,Sub_Category,Category,User_Role,Category_Role
+  Ticket,Sub_Category,Category,User_Role,Category_Role,On_Behalf_Of,Action
 }

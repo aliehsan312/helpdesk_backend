@@ -130,6 +130,13 @@ const isLoggedIn = async (req, res, next) => {
   next()
 }
 
+const userMatcher = (req,res,next) => {
+  try{
+    req.sameUser = req.decodedToken.id == req.body.employee_id ? true : false
+    next()
+  }
+  catch(error) {next(error)}
+}
 const errorHandler = (error, request, response, next) => {
   console.log("From Error Handler", error.message)
 
@@ -150,4 +157,4 @@ const errorHandler = (error, request, response, next) => {
   }
 }
 
-module.exports = { tokenExtractor, isLoggedIn, requestLogger, errorHandler, whereDecider }
+module.exports = { tokenExtractor, isLoggedIn, requestLogger, errorHandler, whereDecider,userMatcher }
