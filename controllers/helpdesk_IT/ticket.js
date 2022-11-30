@@ -68,7 +68,9 @@ router.get("/report", async (req, res, next) => {
         }
       }
     }
-    else where.createdAt = { [Op.gte]: req.query.dateStart}
+    else {
+      where.createdAt = { [Op.gte]: req.query.dateStart}
+    }
     logger.info(where)
     const tickets = await Ticket.findAll({
       where: where,
@@ -159,7 +161,7 @@ router.get("/", tokenExtractor,whereDecider, async (req, res, next) => {
 
   try {
     
-    const currentPage = req.params.page ? req.query.page : 1
+    const currentPage = req.query.page ? req.query.page : 1
     const offset = (currentPage - 1) * 10
 
     const ticketAll = await Ticket.findAndCountAll({
