@@ -5,7 +5,8 @@ const Designation = require("../../models/user/desgination")
 const Grade = require("../../models/user/grade")
 const Role = require('../../models/helpdesk_IT/role')
 const Ticket_Status = require('../../models/helpdesk_IT/ticket_status')
-router.get("/", async (req, res) => {
+router.get("/", async (req, res,next) => {
+  try{
   const departments = await Department.findAll({})
   const locations = await Location.findAll({})
   const designations = await Designation.findAll({
@@ -22,8 +23,11 @@ router.get("/", async (req, res) => {
     roles:role,
     statusList:ticket_status
   }
-  console.log( 'DataGor',data);
   res.status(200).json(data)
+}
+catch(error) {
+  next(error)
+}
 })
 
 module.exports = router

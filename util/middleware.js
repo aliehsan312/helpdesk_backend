@@ -1,6 +1,5 @@
 const jwt = require("jsonwebtoken")
 const { SECRET } = require("./config")
-//const Session = require("../models/session")
 const logger = require("./logger")
 const {
   SW_TECH_ID,
@@ -13,7 +12,10 @@ const {
   USER_ID,
 } = require("./helper")
 const { Op, Sequelize } = require("sequelize")
-const { Category_Role } =  require("../models/helpdesk_IT/helpdesk_associations")
+const {
+  Category_Role,
+  User_Role,
+} = require("../models/helpdesk_IT/helpdesk_associations")
 const requestLogger = (request, response, next) => {
   logger.info("Method:", request.method)
   logger.info("Path:  ", request.path)
@@ -23,8 +25,8 @@ const requestLogger = (request, response, next) => {
 }
 
 const tokenExtractor = (req, res, next) => {
-  const authorization = req.get("authorization")
   try {
+    const authorization = req.get("authorization")
     if (authorization && authorization.toLowerCase().startsWith("bearer ")) {
       console.log("authorization", authorization)
       try {
@@ -43,13 +45,11 @@ const tokenExtractor = (req, res, next) => {
 }
 
 const whereDecider = async (req, res, next) => {
-  console.log("Reacehd Where Decider", req.decodedToken)
   try {
     const where = {}
-    if(req.decodedToken.role.id === USER_ID){
+    if (req.decodedToken.role.id === USER_ID) {
       where.complainer_user_id = req.decodedToken.id
-    }
-    else if (
+    } else if (
       req.decodedToken.role.id === SW_TECH_ID ||
       req.decodedToken.role.id === HW_TECH_ID
     ) {
@@ -67,46 +67,56 @@ const whereDecider = async (req, res, next) => {
           default:
             break
         }
-      }} else if (
-        req.decodedToken.role.id === SW_SUPR_ID ||
-        req.decodedToken.role.id === HW_SUPR_ID
-      ) {
-        if (req.query.type) {
-          switch (req.query.type) {
-            case "new":
-              where.status_id = WAITING_ID
-              break
-            case "attended":
-              where.status_id = ATTENDED_ID
-              break
-            case "unattended":
-              where.status_id = {
-                [Op.or]: [ASSIGNED_ID, WAITING_ID],
-              }
-              break
-            case "assigned_to_me":
-              where.assigned_to_user_id = req.decodedToken.id
-              break
-            default:
-              break
-          }
-        }
-        const categories = await Category_Role.findAll({
-          where: {
-            role_id: req.decodedToken.role.id,
-          },
-          attributes: { exclude: ["id"] },
-        })
-        console.log(
-          "Categorties",
-          categories.map((item) => item.dataValues.category_id)
-        )
-
-        where.category_id = {
-          [Op.or]: categories.map((item) => item.dataValues.category_id),
+      }
+    } else if (
+      req.decodedToken.role.id === SW_SUPR_ID ||
+      req.decodedToken.role.id === HW_SUPR_ID
+    ) {
+      const multipleRoleCheck =
+        req.decodedToken.role.id === SW_SUPR_ID
+          ? await User_Role.findOne({
+              where: { user_id: req.decodedToken.id, role_id: HW_SUPR_ID },
+            })
+          : await User_Role.findOne({
+              where: { user_id: req.decodedToken.id, role_id: SW_SUPR_ID },
+            })
+      const roleArray = multipleRoleCheck ? [req.decodedToken.role.id,multipleRoleCheck.role_id] : [req.decodedToken.role.id]
+      if (req.query.type) {
+        switch (req.query.type) {
+          case "new":
+            where.status_id = WAITING_ID
+            break
+          case "attended":
+            where.status_id = ATTENDED_ID
+            break
+          case "unattended":
+            where.status_id = {
+              [Op.or]: [ASSIGNED_ID, WAITING_ID],
+            }
+            break
+          case "assigned_to_me":
+            where.assigned_to_user_id = req.decodedToken.id
+            break
+          default:
+            break
         }
       }
-    
+      const categories = await Category_Role.findAll({
+        where: {
+          role_id: { [Op.or] : roleArray},
+        },
+        attributes: { exclude: ["id"] },
+      })
+      console.log(
+        "Categorties",
+        categories.map((item) => item.dataValues.category_id)
+      )
+      if(!req.query.type || req.query.type !== "assigned_to_me") {
+      where.category_id = {
+        [Op.or]: categories.map((item) => item.dataValues.category_id),
+      }}
+    }
+
     req.where = where
   } catch (error) {
     next(error)
@@ -130,12 +140,13 @@ const isLoggedIn = async (req, res, next) => {
   next()
 }
 
-const userMatcher = (req,res,next) => {
-  try{
+const userMatcher = (req, res, next) => {
+  try {
     req.sameUser = req.decodedToken.id == req.body.employee_id ? true : false
     next()
+  } catch (error) {
+    next(error)
   }
-  catch(error) {next(error)}
 }
 const errorHandler = (error, request, response, next) => {
   console.log("From Error Handler", error.message)
@@ -157,4 +168,11 @@ const errorHandler = (error, request, response, next) => {
   }
 }
 
-module.exports = { tokenExtractor, isLoggedIn, requestLogger, errorHandler, whereDecider,userMatcher }
+module.exports = {
+  tokenExtractor,
+  isLoggedIn,
+  requestLogger,
+  errorHandler,
+  whereDecider,
+  userMatcher,
+}

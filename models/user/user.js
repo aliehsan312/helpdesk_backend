@@ -80,7 +80,8 @@ User.init({
   },
   is_firstLogin: {
     type: DataTypes.BOOLEAN,
-    allowNull: false
+    allowNull: false,
+    defaultValue: true
   },
   is_active: {
     type: DataTypes.BOOLEAN

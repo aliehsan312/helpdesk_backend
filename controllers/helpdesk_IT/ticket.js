@@ -71,7 +71,6 @@ router.get("/report", async (req, res, next) => {
     else {
       where.createdAt = { [Op.gte]: req.query.dateStart}
     }
-    logger.info(where)
     const tickets = await Ticket.findAll({
       where: where,
       include: [
@@ -157,8 +156,6 @@ router.get("/:id", async (req, res, next) => {
 })
 
 router.get("/", tokenExtractor,whereDecider, async (req, res, next) => {
-  console.log("Reacehd GET")
-
   try {
     
     const currentPage = req.query.page ? req.query.page : 1
@@ -211,8 +208,6 @@ router.get("/", tokenExtractor,whereDecider, async (req, res, next) => {
       hasNextPage: hasNextPage,
       hasPreviousPage: hasPreviousPage,
     }
-    
-    console.log("Returned Tickets", totalPages)
     res.status(200).json({ tickets: ticketAll.rows, meta })
   } catch (error) {
     next(error)
@@ -220,7 +215,6 @@ router.get("/", tokenExtractor,whereDecider, async (req, res, next) => {
 })
 
 router.post("/",tokenExtractor, async (req, res, next) => {
-  logger.info("Reached POST")
   try {
     const ticket = req.body
     const user = await User.findOne({
@@ -228,18 +222,16 @@ router.post("/",tokenExtractor, async (req, res, next) => {
     })
     ticket.complainer_user_id = user.id
     ticket.status_id = 1
-    console.log("Ticket Here", ticket)
     const result = await Ticket.create(ticket)
-    logger.info("From POST", result)
     const action = {
       user_id: req.decodedToken.id,
       ticket_id: result.id,
       action_detail:"New Complaint Inserted",
       comments: "Status: Waiting"
     }
-    logger.info("Action object",action)
+
     const actionRes = await Action.create(action)
-    logger.info("Action Response",actionRes)
+    
     if(req.decodedToken.id !== user.id) {
       await On_Behalf_Of.create({ticket_id:result.id,created_by_user_id:req.decodedToken.id})
     }
@@ -250,6 +242,7 @@ router.post("/",tokenExtractor, async (req, res, next) => {
 })
 
 router.put("/:id", tokenExtractor, async (req, res, next) => {
+  console.log( 'Reached Ticket Put');
   try {
     const body = req.body
     const ticket = await Ticket.findOne({
@@ -258,13 +251,20 @@ router.put("/:id", tokenExtractor, async (req, res, next) => {
       },
     })
     if (ticket) {
-      if (body.assigned_to_user_id)
+      if (body.assigned_to_user_id && body.assigned_to_user_id !== ticket.assigned_to_user_id)
         ticket.assigned_to_user_id = body.assigned_to_user_id
       if (body.status_id) ticket.status_id = body.status_id
-      const newTicket = await ticket.save()
-      const action = {
 
-      }
+      const newTicket = await ticket.save()
+      const statusName = await Ticket_Status.findOne({where:{id:body.status_id},raw:true})
+      const action = {
+      user_id: req.decodedToken.id,
+      ticket_id: ticket.id,
+      action_detail:`Status: ${statusName.name}`,
+      comments: body.comment ? body.comment : ""
+    }
+
+    await Action.create(action)
       res.status(200).json(newTicket)
     } else {
       res.status(404).end()

@@ -76,7 +76,7 @@ module.exports = {
         type: DataTypes.DATE
       },
       og_number: {
-        type: DataTypes.NUMBER,
+        type: DataTypes.INTEGER,
         unique:true,
         allowNull: false
       },
@@ -132,7 +132,8 @@ module.exports = {
       },
       is_firstLogin: {
         type: DataTypes.BOOLEAN,
-        allowNull: false
+        allowNull: false,
+        default:true
       },
       is_active: {
         type: DataTypes.BOOLEAN
