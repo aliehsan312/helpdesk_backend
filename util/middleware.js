@@ -10,7 +10,7 @@ const {
   ASSIGNED_ID,
   ATTENDED_ID,
   USER_ID,
-} = require("./helper")
+} = require("./config")
 const { Op, Sequelize } = require("sequelize")
 const {
   Category_Role,

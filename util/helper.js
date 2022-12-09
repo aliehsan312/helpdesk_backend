@@ -1,4 +1,3 @@
-
 const SW_TECH_ID = 5
 const HW_TECH_ID = 3
 const HW_SUPR_ID = 1

@@ -3,7 +3,6 @@ const { Op, Sequelize } = require("sequelize")
 const Incident_Log = require("../../models/helpdesk_IT/incident_log")
 
 router.get("/", async (req, res, next) => {
-  console.log( req);
   let where = {}
   try {
     if (req.query.type === "text") {

@@ -9,7 +9,7 @@ const {
   HW_TECH_ID,
   SW_SUPR_ID,
   HW_SUPR_ID,
-} = require("../../util/helper")
+} = require("../../util/config")
 const { tokenExtractor } = require("../../util/middleware")
 
 router.get("/:id", async (req, res, next) => {

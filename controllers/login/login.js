@@ -8,7 +8,7 @@ const {
   USER_ACCESS_LEVEL,
   TECH_ACCESS_LEVEL,
   SUPR_ACCESS_LEVEL,
-} = require("../../util/helper")
+} = require("../../util/config")
 
 router.post("/", async (req, res, next) => {
   try {
