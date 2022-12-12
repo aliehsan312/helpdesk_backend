@@ -12,7 +12,6 @@ const roleRouter = require('./controllers/helpdesk_IT/userRole')
 const {requestLogger,errorHandler} = require('./util/middleware')
 const incidentRouter = require('./controllers/helpdesk_IT/incidentLog')
 const logger = require('./util/logger')
-
 const unknownEndpoint = (request, response) => {
   return response.status(404).send({ error: "unknown endpoint" })
 }
@@ -20,6 +19,7 @@ const unknownEndpoint = (request, response) => {
 
 app.use(cors())
 app.use(express.json())
+app.use(express.static('build'))
 app.use(requestLogger)
 app.use('/api/login',loginRouter)
 app.use('/api/tickets',ticketRouter)

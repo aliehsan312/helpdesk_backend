@@ -11,7 +11,7 @@ const Category = require("../../models/helpdesk_IT/category")
 const Grade = require("../../models/user/grade")
 const { User } = require("../../models/user/user_associations")
 const logger = require("../../util/logger")
-const { tokenExtractor,whereDecider } = require("../../util/middleware")
+const { tokenExtractor,whereDecider,reportCounter } = require("../../util/middleware")
 
 
 router.get("/search/:id", async (req, res, next) => {
@@ -57,7 +57,7 @@ router.get("/search/:id", async (req, res, next) => {
     next(error)
   }
 })
-router.get("/report", async (req, res, next) => {
+router.get("/report",reportCounter, async (req, res, next) => {
   try {
     const where = {}
     if(req.query.type === 'range') {
@@ -106,7 +106,7 @@ router.get("/report", async (req, res, next) => {
       order: [["createdAt", "DESC"]],
         
   })
-    res.status(200).json(tickets)
+    res.status(200).json({personCount:req.personCount,totalCount:req.totalCount,tickets})
   } catch (error) {
     next(error)
   }

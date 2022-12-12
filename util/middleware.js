@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken")
-const { SECRET } = require("./config")
+const { SECRET, IN_PROCESS_ID, CLOSED_ID } = require("./config")
 const logger = require("./logger")
 const {
   SW_TECH_ID,
@@ -11,11 +11,13 @@ const {
   ATTENDED_ID,
   USER_ID,
 } = require("./config")
+const { Ticket } = require("../models/helpdesk_IT/helpdesk_associations")
 const { Op, Sequelize } = require("sequelize")
 const {
   Category_Role,
   User_Role,
 } = require("../models/helpdesk_IT/helpdesk_associations")
+const User = require("../models/user/user")
 const requestLogger = (request, response, next) => {
   logger.info("Method:", request.method)
   logger.info("Path:  ", request.path)
@@ -42,6 +44,147 @@ const tokenExtractor = (req, res, next) => {
     next(error)
   }
   next()
+}
+
+const reportCounter = async (req, res, next) => {
+  try {
+    const where = {}
+    if (req.query.type === "range") {
+      where.createdAt = {
+        [Op.and]: {
+          [Op.gte]: req.query.dateStart,
+          [Op.lte]: req.query.dateEnd,
+        },
+      }
+    } else {
+      where.createdAt = { [Op.gte]: req.query.dateStart }
+    }
+
+    const tickets = await Ticket.findAll({
+      where: where,
+      attributes: [
+        "assigned_to_user_id",
+        Sequelize.fn("count", Sequelize.col("status_id")),
+        "status_id",
+      ],
+      group: ["assigned_to_user_id", "status_id"],
+      order: ["status_id"],
+      raw: true,
+    })
+    const arrayUniqueByKey1 = [
+      ...new Map(
+        tickets.map((item) => [
+          item["assigned_to_user_id"],
+          item.assigned_to_user_id,
+        ])
+      ).values(),
+    ]
+    const finalArray = []
+
+    const users = await User.findAll({
+      where: { id: { [Op.or]: arrayUniqueByKey1 } },
+      attributes: ["id", "employee_name"],
+      raw: true,
+    })
+
+    for (const tech of users) {
+      console.log("Here", tech)
+      let sample = {
+        id: tech.id,
+        name: tech.employee_name,
+        Waiting: "0",
+        Assigned: "0",
+        Attended: "0",
+        In_Process: "0",
+        Closed: "0",
+      }
+      const try1 = await Ticket.findAll({
+        where: {
+          assigned_to_user_id: tech.id,
+        },
+        attributes: [
+          Sequelize.fn("count", Sequelize.col("status_id")),
+          "status_id",
+        ],
+        group: ["status_id"],
+        order: ["status_id"],
+        raw: true,
+      })
+      const ry2 = try1.map((item) => {
+        switch (item.status_id) {
+          case WAITING_ID:
+            sample.Waiting = item.count
+            break
+          case ASSIGNED_ID:
+            sample.Assigned = item.count
+            break
+          case ATTENDED_ID:
+            sample.Attended = item.count
+            break
+          case IN_PROCESS_ID:
+            sample.In_Process = item.count
+            break
+          case CLOSED_ID:
+            sample.Closed = item.count
+            break
+          default:
+            break
+        }
+      })
+      finalArray.push(sample)
+    }
+    console.log("Tickets", tickets)
+    const finalItem = tickets.find((item) => item.assigned_to_user_id === null)
+    console.log("Final Item", finalItem)
+    if (!!finalItem)
+      finalArray.push({
+        id: "",
+        name: "",
+        Waiting: finalItem.count,
+        Assigned: "0",
+        Attended: "0",
+        In_Process: "0",
+        Closed: "0",
+      })
+
+    const ticketNumbers = await Ticket.findAndCountAll({
+      where,
+      attributes: [
+        "status_id",
+        Sequelize.fn("count", Sequelize.col("status_id")),
+      ],
+      group: ["status_id"],
+      raw: true,
+    })
+    const refactoredNumbers = ticketNumbers?.rows?.map(item => {
+      switch(item.status_id){
+        case WAITING_ID:
+          label='Complaints Waiting'
+          break
+        case ASSIGNED_ID:
+          label='Complaints Assigned'
+          break
+        case ATTENDED_ID:
+          label='Complaints Attended'
+          break
+        case IN_PROCESS_ID:
+          label='Complaints In-Process'
+          break
+        case CLOSED_ID:
+          label='Complaints Resolved'
+          break
+        default:
+          break
+      }
+      return {label,count:item.count}
+    })
+    refactoredNumbers.push({label:'Total Complaints',count: (await Ticket.count({where,raw:true})).toString()})
+    req.personCount = finalArray
+    req.totalCount = refactoredNumbers
+    next()
+  } catch (error) {
+    console.log("error in try", error)
+  }
 }
 
 const whereDecider = async (req, res, next) => {
@@ -80,7 +223,9 @@ const whereDecider = async (req, res, next) => {
           : await User_Role.findOne({
               where: { user_id: req.decodedToken.id, role_id: SW_SUPR_ID },
             })
-      const roleArray = multipleRoleCheck ? [req.decodedToken.role.id,multipleRoleCheck.role_id] : [req.decodedToken.role.id]
+      const roleArray = multipleRoleCheck
+        ? [req.decodedToken.role.id, multipleRoleCheck.role_id]
+        : [req.decodedToken.role.id]
       if (req.query.type) {
         switch (req.query.type) {
           case "new":
@@ -103,7 +248,7 @@ const whereDecider = async (req, res, next) => {
       }
       const categories = await Category_Role.findAll({
         where: {
-          role_id: { [Op.or] : roleArray},
+          role_id: { [Op.or]: roleArray },
         },
         attributes: { exclude: ["id"] },
       })
@@ -111,10 +256,11 @@ const whereDecider = async (req, res, next) => {
         "Categorties",
         categories.map((item) => item.dataValues.category_id)
       )
-      if(!req.query.type || req.query.type !== "assigned_to_me") {
-      where.category_id = {
-        [Op.or]: categories.map((item) => item.dataValues.category_id),
-      }}
+      if (!req.query.type || req.query.type !== "assigned_to_me") {
+        where.category_id = {
+          [Op.or]: categories.map((item) => item.dataValues.category_id),
+        }
+      }
     }
 
     req.where = where
@@ -175,4 +321,5 @@ module.exports = {
   errorHandler,
   whereDecider,
   userMatcher,
+  reportCounter,
 }
