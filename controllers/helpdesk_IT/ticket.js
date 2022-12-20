@@ -4,19 +4,33 @@ const {
   Ticket,
   Sub_Category,
   Action,
-  On_Behalf_Of
+  On_Behalf_Of,
 } = require("../../models/helpdesk_IT/helpdesk_associations")
 const Ticket_Status = require("../../models/helpdesk_IT/ticket_status")
 const Category = require("../../models/helpdesk_IT/category")
 const Grade = require("../../models/user/grade")
 const { User } = require("../../models/user/user_associations")
 const logger = require("../../util/logger")
-const { tokenExtractor,whereDecider,reportCounter } = require("../../util/middleware")
-
+const {
+  tokenExtractor,
+  whereDecider,
+  reportCounter,
+} = require("../../util/middleware")
+const {
+  WAITING_ID,
+  ASSIGNED_ID,
+  ATTENDED_ID,
+  SW_SUPR_ID,
+  HW_SUPR_ID,
+} = require("../../util/config")
 
 router.get("/search/:id", async (req, res, next) => {
   try {
-    const user = await User.findOne({where:{og_number:req.params.id}})
+    const user = await User.findOne({
+      where: { og_number: req.params.id },
+      raw: true,
+    })
+    console.log("User", user)
     const tickets = await Ticket.findAll({
       where: { complainer_user_id: user.id },
       include: [
@@ -35,7 +49,7 @@ router.get("/search/:id", async (req, res, next) => {
         {
           model: User,
           as: "complainer_user",
-          attributes: ["user_name", "employee_name","og_number"],
+          attributes: { exclude: ["is_firstLogin", "is_active","user_name","user_password","createdAt",] },
           include: [
             {
               model: Grade,
@@ -50,26 +64,25 @@ router.get("/search/:id", async (req, res, next) => {
         },
       ],
       order: [["updatedAt", "DESC"]],
-        
-  })
+    })
     res.status(200).json(tickets)
   } catch (error) {
     next(error)
   }
 })
-router.get("/report",reportCounter, async (req, res, next) => {
+
+router.get("/report", reportCounter, async (req, res, next) => {
   try {
     const where = {}
-    if(req.query.type === 'range') {
+    if (req.query.type === "range") {
       where.createdAt = {
         [Op.and]: {
           [Op.gte]: req.query.dateStart,
-          [Op.lte]: req.query.dateEnd 
-        }
+          [Op.lte]: req.query.dateEnd,
+        },
       }
-    }
-    else {
-      where.createdAt = { [Op.gte]: req.query.dateStart}
+    } else {
+      where.createdAt = { [Op.gte]: req.query.dateStart }
     }
     const tickets = await Ticket.findAll({
       where: where,
@@ -89,7 +102,7 @@ router.get("/report",reportCounter, async (req, res, next) => {
         {
           model: User,
           as: "complainer_user",
-          attributes: ["user_name", "employee_name","og_number"],
+          attributes: ["user_name", "employee_name", "og_number"],
           include: [
             {
               model: Grade,
@@ -104,9 +117,14 @@ router.get("/report",reportCounter, async (req, res, next) => {
         },
       ],
       order: [["createdAt", "DESC"]],
-        
-  })
-    res.status(200).json({personCount:req.personCount,totalCount:req.totalCount,tickets})
+    })
+    res
+      .status(200)
+      .json({
+        personCount: req.personCount,
+        totalCount: req.totalCount,
+        tickets,
+      })
   } catch (error) {
     next(error)
   }
@@ -132,7 +150,7 @@ router.get("/:id", async (req, res, next) => {
         {
           model: User,
           as: "complainer_user",
-          attributes: ["user_name", "employee_name","og_number"],
+          attributes: { exclude: ["is_firstLogin", "is_active"] },
           include: [
             {
               model: Grade,
@@ -147,17 +165,15 @@ router.get("/:id", async (req, res, next) => {
         },
       ],
       order: [["updatedAt", "DESC"]],
-        
-  })
+    })
     res.status(200).json(tickets)
   } catch (error) {
     next(error)
   }
 })
 
-router.get("/", tokenExtractor,whereDecider, async (req, res, next) => {
+router.get("/", tokenExtractor, whereDecider, async (req, res, next) => {
   try {
-    
     const currentPage = req.query.page ? req.query.page : 1
     const offset = (currentPage - 1) * 10
 
@@ -214,7 +230,7 @@ router.get("/", tokenExtractor,whereDecider, async (req, res, next) => {
   }
 })
 
-router.post("/",tokenExtractor, async (req, res, next) => {
+router.post("/", tokenExtractor, async (req, res, next) => {
   try {
     const ticket = req.body
     const user = await User.findOne({
@@ -226,14 +242,17 @@ router.post("/",tokenExtractor, async (req, res, next) => {
     const action = {
       user_id: req.decodedToken.id,
       ticket_id: result.id,
-      action_detail:"New Complaint Inserted",
-      comments: "Status: Waiting"
+      action_detail: "New Complaint Inserted",
+      comments: "Status: Waiting",
     }
 
     const actionRes = await Action.create(action)
-    
-    if(req.decodedToken.id !== user.id) {
-      await On_Behalf_Of.create({ticket_id:result.id,created_by_user_id:req.decodedToken.id})
+
+    if (req.decodedToken.id !== user.id) {
+      await On_Behalf_Of.create({
+        ticket_id: result.id,
+        created_by_user_id: req.decodedToken.id,
+      })
     }
     res.status(200).json(result)
   } catch (error) {
@@ -242,7 +261,7 @@ router.post("/",tokenExtractor, async (req, res, next) => {
 })
 
 router.put("/:id", tokenExtractor, async (req, res, next) => {
-  console.log( 'Reached Ticket Put');
+  console.log("Reached Ticket Put")
   try {
     const body = req.body
     const ticket = await Ticket.findOne({
@@ -251,20 +270,26 @@ router.put("/:id", tokenExtractor, async (req, res, next) => {
       },
     })
     if (ticket) {
-      if (body.assigned_to_user_id && body.assigned_to_user_id !== ticket.assigned_to_user_id)
+      if (
+        body.assigned_to_user_id &&
+        body.assigned_to_user_id !== ticket.assigned_to_user_id
+      )
         ticket.assigned_to_user_id = body.assigned_to_user_id
       if (body.status_id) ticket.status_id = body.status_id
 
       const newTicket = await ticket.save()
-      const statusName = await Ticket_Status.findOne({where:{id:body.status_id},raw:true})
+      const statusName = await Ticket_Status.findOne({
+        where: { id: body.status_id },
+        raw: true,
+      })
       const action = {
-      user_id: req.decodedToken.id,
-      ticket_id: ticket.id,
-      action_detail:`Status: ${statusName.name}`,
-      comments: body.comment ? body.comment : ""
-    }
+        user_id: req.decodedToken.id,
+        ticket_id: ticket.id,
+        action_detail: `Status: ${statusName.name}`,
+        comments: body.comment ? body.comment : "",
+      }
 
-    await Action.create(action)
+      await Action.create(action)
       res.status(200).json(newTicket)
     } else {
       res.status(404).end()

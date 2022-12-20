@@ -18,6 +18,7 @@ const {
   User_Role,
 } = require("../models/helpdesk_IT/helpdesk_associations")
 const User = require("../models/user/user")
+const moment = require("moment/moment")
 const requestLogger = (request, response, next) => {
   logger.info("Method:", request.method)
   logger.info("Path:  ", request.path)
@@ -50,14 +51,14 @@ const reportCounter = async (req, res, next) => {
   try {
     const where = {}
     if (req.query.type === "range") {
-      where.createdAt = {
+      where.updatedAt = {
         [Op.and]: {
           [Op.gte]: req.query.dateStart,
           [Op.lte]: req.query.dateEnd,
         },
       }
     } else {
-      where.createdAt = { [Op.gte]: req.query.dateStart }
+      where.updatedAt = { [Op.gte]: req.query.dateStart }
     }
 
     const tickets = await Ticket.findAll({
@@ -98,8 +99,9 @@ const reportCounter = async (req, res, next) => {
         In_Process: "0",
         Closed: "0",
       }
+      
       const try1 = await Ticket.findAll({
-        where: {
+        where: {...where,
           assigned_to_user_id: tech.id,
         },
         attributes: [
@@ -183,12 +185,14 @@ const reportCounter = async (req, res, next) => {
     req.totalCount = refactoredNumbers
     next()
   } catch (error) {
-    console.log("error in try", error)
+    next(error)
   }
 }
 
 const whereDecider = async (req, res, next) => {
   try {
+    const previousWeek = moment().subtract(7,'days').startOf('day').toString()
+    console.log( 'Week',previousWeek);
     const where = {}
     if (req.decodedToken.role.id === USER_ID) {
       where.complainer_user_id = req.decodedToken.id
@@ -202,6 +206,9 @@ const whereDecider = async (req, res, next) => {
           case "new":
             where.status_id = {
               [Op.or]: [WAITING_ID, ASSIGNED_ID],
+            }
+            where.updatedAt = {
+              [Op.gte]: previousWeek
             }
             break
           case "attended":
@@ -230,6 +237,9 @@ const whereDecider = async (req, res, next) => {
         switch (req.query.type) {
           case "new":
             where.status_id = WAITING_ID
+            where.updatedAt = {
+              [Op.gte]: previousWeek
+            }
             break
           case "attended":
             where.status_id = ATTENDED_ID
